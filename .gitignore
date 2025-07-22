@@ -1,0 +1,9 @@
+.env
+__pycache__/
+WORKFLOW.md
+PLAN.md
+IMPLEMENT.md
+GEMINI.md
+EXPLAIN.md
+.venv/
+.gemini/

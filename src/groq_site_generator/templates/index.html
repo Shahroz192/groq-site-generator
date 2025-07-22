@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebCraft AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #D05300;
+            --brand-dark: #A34200;
+            --brand-light: #FF8C42;
+
+            --header-height: 60px;
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-full: 9999px;
+
+            --light-bg: #F9F5F1;
+            --light-header-bg: #FFFFFF;
+            --light-text: #3A2E28;
+            --light-border: #E0D8D1;
+            --light-editor-bg: #FFFFFF;
+            --light-prompt-bg: #FDFDFD;
+            --light-preview-bg: #FFFFFF;
+
+            --dark-bg: #282c34;
+            --dark-header-bg: #21252b;
+            --dark-text: #F9F5F1;
+            --dark-border: #3A3F4B;
+            --dark-editor-bg: #1e1e1e;
+            --dark-prompt-bg: #252526;
+            --dark-preview-bg: #282c34;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--light-text);
+        }
+
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        header {
+            padding: 0 2rem;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            flex-shrink: 0;
+            transition: background-color 0.3s, border-bottom-color 0.3s;
+        }
+
+        body.light-mode header {
+            background-color: var(--light-header-bg);
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        body.dark-mode header {
+            background-color: var(--dark-header-bg);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-buttons {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-btn {
+            background-color: var(--brand-primary);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--border-radius-full);
+            padding: 0;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-btn:hover {
+            background-color: var(--brand-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        #theme-switcher {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 5px;
+        }
+        
+        body.light-mode #theme-switcher {
+            color: var(--light-text);
+        }
+
+        body.dark-mode #theme-switcher {
+            color: var(--dark-text);
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - var(--header-height));
+            overflow: hidden;
+            border-radius: var(--border-radius-lg);
+            margin: 1rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .editor-pane {
+            flex: 0 0 45%;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            border-top-left-radius: var(--border-radius-lg);
+            border-bottom-left-radius: var(--border-radius-lg);
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        body.light-mode .editor-pane {
+            background: var(--light-editor-bg);
+        }
+
+        body.dark-mode .editor-pane {
+            background: var(--dark-editor-bg);
+        }
+
+        #monaco-editor-container {
+            flex: 1;
+            overflow: hidden;
+            border-top-left-radius: var(--border-radius-lg);
+        }
+
+        .prompt-area {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            border-bottom-left-radius: var(--border-radius-lg);
+            transition: background-color 0.3s, border-top-color 0.3s;
+        }
+
+        body.light-mode .prompt-area {
+            background-color: var(--light-prompt-bg);
+            border-top: 1px solid var(--light-border);
+        }
+
+        body.dark-mode .prompt-area {
+            background-color: var(--dark-prompt-bg);
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .prompt-area label {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        body.light-mode .prompt-area label {
+            color: var(--light-text);
+        }
+
+        body.dark-mode .prompt-area label {
+            color: var(--dark-text);
+        }
+
+        .textarea-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt-area textarea {
+            border-radius: var(--border-radius-md);
+            padding: 0.75rem 2.75rem 0.75rem 0.75rem;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            resize: none;
+            height: 60px;
+            min-height: 40px;
+            flex-grow: 1;
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s, color 0.3s;
+        }
+        
+        body.light-mode .prompt-area textarea {
+            background-color: var(--light-editor-bg);
+            border: 1px solid var(--light-border);
+            color: var(--light-text);
+        }
+
+        body.dark-mode .prompt-area textarea {
+            background-color: var(--dark-editor-bg);
+            border: 1px solid var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .prompt-area textarea:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(208, 83, 0, 0.4);
+        }
+
+        button {
+            background-color: var(--brand-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        button i {
+            font-size: 1.1em;
+        }
+
+        button:hover {
+            background-color: var(--brand-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        button:disabled {
+            background-color: #555;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #generate-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 38px;
+            width: 38px;
+            border-radius: var(--border-radius-full);
+            padding: 0;
+            font-size: 1.1rem;
+        }
+
+        #resizer {
+            flex: 0 0 6px;
+            cursor: col-resize;
+            z-index: 5;
+            transition: background-color 0.2s;
+        }
+
+        body.light-mode #resizer {
+            background: var(--light-border);
+        }
+        body.dark-mode #resizer {
+            background: var(--dark-border);
+        }
+
+        #resizer:hover {
+            background-color: var(--brand-primary);
+        }
+
+        .preview-pane {
+            flex: 1;
+            min-width: 300px;
+            border-top-right-radius: var(--border-radius-lg);
+            border-bottom-right-radius: var(--border-radius-lg);
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        body.light-mode .preview-pane {
+            background: var(--light-preview-bg);
+        }
+        body.dark-mode .preview-pane {
+            background: var(--dark-preview-bg);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            transition: background-color 0.3s;
+        }
+
+        body.light-mode iframe {
+            background: var(--light-preview-bg);
+        }
+        body.dark-mode iframe {
+            background: var(--dark-preview-bg);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+</head>
+
+<body class="dark-mode">
+    <header>
+        <h1>WebCraft AI</h1>
+        <div class="header-buttons">
+            <button id="theme-switcher" title="Toggle Theme">
+                <i class="fas fa-sun"></i>
+            </button>
+            <button id="download-btn" class="header-btn" title="Download Code"><i class="fas fa-download"></i></button>
+            <button id="new-chat-btn" class="header-btn" title="New Chat"><i class="fas fa-plus"></i></button>
+        </div>
+    </header>
+    <main>
+        <div class="editor-pane" id="editor-pane">
+            <div id="monaco-editor-container"></div>
+            <div class="prompt-area">
+                <label for="prompt-input">Your Prompt</label>
+                <div class="textarea-container">
+                    <textarea id="prompt-input" placeholder="Create a modern landing page for a coffee shop"></textarea>
+                    <button id="generate-btn" title="Generate"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resizer"></div>
+
+        <div class="preview-pane" id="preview-pane">
+            <iframe id="preview-frame" title="Website Preview" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+    </main>
+
+    <script>
+        const promptInput = document.getElementById('prompt-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const previewFrame = document.getElementById('preview-frame');
+        const themeSwitcher = document.getElementById('theme-switcher');
+        const themeIcon = themeSwitcher.querySelector('i');
+        let monacoEditor;
+
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            monacoEditor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+                value: '',
+                language: 'html',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                readOnly: false,
+                wordWrap: 'on',
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+            });
+
+            monacoEditor.getModel().onDidChangeContent(() => {
+                previewFrame.srcdoc = monacoEditor.getValue();
+            });
+            
+            setTheme(localStorage.getItem('theme') || 'dark');
+        });
+
+        function setTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                monaco.editor.setTheme('vs');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                monaco.editor.setTheme('vs-dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        themeSwitcher.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('theme');
+            setTheme(currentTheme === 'light' ? 'dark' : 'light');
+        });
+
+
+        const resizer = document.getElementById('resizer');
+        const editorPane = document.getElementById('editor-pane');
+        const previewPane = document.getElementById('preview-pane');
+
+        let isResizing = false;
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.userSelect = 'none';
+            document.body.style.pointerEvents = 'none';
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', stopResizing);
+        });
+
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            const mainPanel = resizer.parentNode;
+            const totalWidth = mainPanel.offsetWidth;
+            const newLeftWidth = e.clientX - mainPanel.getBoundingClientRect().left;
+            const leftPercentage = (newLeftWidth / totalWidth) * 100;
+            editorPane.style.flex = `0 0 ${leftPercentage}%`;
+            previewPane.style.flex = `1 1 ${100 - leftPercentage}%`;
+        }
+
+        function stopResizing() {
+            isResizing = false;
+            document.body.style.userSelect = '';
+            document.body.style.pointerEvents = '';
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', stopResizing);
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                alert('Please enter a prompt.');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            monacoEditor.setValue('');
+            previewFrame.srcdoc = '';
+
+            let accumulatedCode = '';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt, code: monacoEditor.getValue() })
+                });
+
+                if (!response.body) {
+                    throw new Error("Response body is missing.");
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    accumulatedCode += chunk;
+
+                    monacoEditor.setValue(accumulatedCode);
+                    previewFrame.srcdoc = accumulatedCode;
+                }
+
+            } catch (error) {
+                const errorMessage = `/*
+ Error: ${error.message}
+*/`;
+                monacoEditor.setValue(errorMessage);
+                previewFrame.srcdoc = `<p style="color:red; font-family: sans-serif; text-align: center; padding: 2rem;">${error.message}</p>`;
+                console.error('Error:', error);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        });
+
+        const downloadBtn = document.getElementById('download-btn');
+        downloadBtn.addEventListener('click', () => {
+            const code = monacoEditor.getValue();
+            if (!code || code.trim() === '') {
+                alert('Nothing to download.');
+                return;
+            }
+            const blob = new Blob([code], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        });
+
+        const newChatBtn = document.getElementById('new-chat-btn');
+        newChatBtn.addEventListener('click', async () => {
+            monacoEditor.setValue('');
+            previewFrame.srcdoc = '';
+            promptInput.value = '';
+            try {
+                await fetch('/new_chat', { method: 'POST' });
+            } catch (error) {
+                console.error('Error starting new chat:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>
