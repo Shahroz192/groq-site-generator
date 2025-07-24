@@ -64,12 +64,15 @@ Your task is to generate a single, self-contained HTML file based on the user's 
     If the user provides existing code from a previous turn, use that code as the foundation. Apply the new requests by editing and extending the existing code, ensuring all quality standards are maintained throughout the iterative process.
 
 """
+
 store = {}
+
 
 def get_session_history(session_id: str) -> ChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
+
 
 prompt_template = ChatPromptTemplate.from_messages(
     [
@@ -81,7 +84,7 @@ prompt_template = ChatPromptTemplate.from_messages(
 
 chain = prompt_template | llm
 
-with_message_history = RunnableWithMessageHistory(
+runnable_with_message_history = RunnableWithMessageHistory(
     chain,
     get_session_history,
     input_messages_key="input",
@@ -89,22 +92,24 @@ with_message_history = RunnableWithMessageHistory(
 )
 
 
-
 @app.route("/")
 def index():
-    if 'session_id' not in session:
-        session['session_id'] = str(uuid.uuid4())
+    if "session_id" not in session:
+        session["session_id"] = str(uuid.uuid4())
     return render_template("index.html")
+
 
 @app.route("/generate", methods=["POST"])
 def generate_code():
     if not llm:
-        return Response("LLM not initialized. Check API key and dependencies.", status=500)
+        return Response(
+            "LLM not initialized. Check API key and dependencies.", status=500
+        )
 
     data = request.get_json()
     user_prompt = data.get("prompt")
-    existing_code = data.get("code", "") 
-    session_id = session.get('session_id')
+    existing_code = data.get("code", "")
+    session_id = session.get("session_id")
 
     if not user_prompt:
         return Response("Prompt is required.", status=400)
@@ -128,20 +133,24 @@ and continue the flow and follow the instructions in system prompt do not add an
 
     def generate():
         try:
-            for chunk in with_message_history.stream({"input": full_prompt}, config=config):
+            for chunk in runnable_with_message_history.stream(
+                {"input": full_prompt}, config=config
+            ):
                 yield chunk.content
         except Exception as e:
             print(f"Error during generation: {e}")
             error_message = f"/* Error: {str(e)} */"
             yield error_message
 
-    return Response(generate(), mimetype='text/plain')
+    return Response(generate(), mimetype="text/plain")
+
 
 @app.route("/new_chat", methods=["POST"])
 def new_chat():
-    session.pop('session_id', None)
-    session['session_id'] = str(uuid.uuid4())
+    session.pop("session_id", None)
+    session["session_id"] = str(uuid.uuid4())
     return "OK"
 
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
