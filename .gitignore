@@ -14,3 +14,5 @@ EXPLAIN.md
 .vscode/
 .venv/
 .windsurf/
+
+*.db
