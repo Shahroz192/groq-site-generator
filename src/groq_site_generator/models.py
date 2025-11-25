@@ -1,6 +1,9 @@
 from datetime import datetime
 import json
+import logging
 from .extensions import db
+
+logger = logging.getLogger(__name__)
 
 class ChatHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -12,7 +15,8 @@ class ChatHistory(db.Model):
     def get_messages(self):
         try:
             return json.loads(self.messages)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.exception("Failed to decode messages field for session_id: %s", self.session_id)
             return []
 
     def set_messages(self, messages_list):
